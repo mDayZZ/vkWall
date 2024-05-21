@@ -1,13 +1,20 @@
 // ==UserScript==
-// @name         New Userscript
+// @name         vkWall
 // @namespace    http://tampermonkey.net/
 // @version      2024-05-19
 // @description  try to take over the world!
-// @author       You
+// @author       DayZZ
 // @match        https://vk.com/max_dayzz
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=vk.com
 // @grant        none
 // ==/UserScript==
+
+posts = []
+
+const createPostObserver = () => {
+
+    return observer
+}
 
 getPostObject = (postElement) => { //need to init as constant value
     const postObject = {
@@ -45,3 +52,54 @@ getPostObject = (postElement) => { //need to init as constant value
     return postObject
 }
 //'._post.post'
+
+scanWallPosts = () => {
+    console.log('Запуск сканирования постов')
+
+    const postWall = document.getElementById('page_wall_posts')
+    const onLoadPosts = document.getElementById('page_wall_posts').childNodes
+    for (let onLoadPost of onLoadPosts) {
+        if (onLoadPost.classList.contains('_post')) {
+            posts.push(getPostObject(onLoadPost))
+            console.log('('+posts.length+') Пропушили стартовый', onLoadPost)
+        }
+        else {
+            console.log('Пропустили стартовый', onLoadPost)
+        }
+    }
+
+    let postObserver = new MutationObserver(mutationRecords => {
+        for (let mutationRecord of mutationRecords) {
+            mutationRecord.addedNodes.forEach((node)=>{
+                if (node.classList.contains('_post')){
+                    posts.push(getPostObject(node))
+                    console.log('('+posts.length+') Добавлена динамическая нода', node)
+                }
+                else {
+                    console.log('Пропущена динамическая нода', node)
+                }
+            })
+        }
+    });
+
+    postObserver.observe(postWall, {
+        childList: true, // наблюдать за непосредственными детьми
+        subtree: false, // и более глубокими потомками
+        characterDataOldValue: false // передавать старое значение в колбэк
+    });
+
+
+}
+
+///ui hotkeys
+
+document.addEventListener('keypress',(event)=>{
+    switch (event.code) {
+        case 'KeyM':
+            console.log('Mem')
+            break
+        case 'KeyI':
+            scanWallPosts()
+            break
+    }
+})
